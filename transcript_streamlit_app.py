@@ -1,19 +1,23 @@
 import streamlit as st
 import requests
-from PIL import Image, ImageDraw, ImageFont
-from io import BytesIO
 from fpdf import FPDF
 
 # Configure page
 st.set_page_config(page_title="PDF Transcript Reformatter", page_icon="📏", layout="wide")
 
-# Function to create PDF from text
+# Function to create formatted PDF from text
 def create_pdf_from_text(text):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, text)
+
+    # Properly formatted line breaks
+    lines = text.split('\n')
+    for line in lines:
+        if line.strip():
+            pdf.multi_cell(0, 10, line.strip())
+            pdf.ln(2)
     return pdf
 
 # User input for URL
@@ -34,7 +38,7 @@ if url:
             st.subheader("Original Transcript Text")
             st.text_area("Transcript Text", transcript_text, height=300)
 
-            # Create PDF from transcript text
+            # Create formatted PDF from transcript text
             pdf = create_pdf_from_text(transcript_text)
             output_path = "/mnt/data/formatted_transcript.pdf"
             pdf.output(output_path)
@@ -52,3 +56,4 @@ if url:
 
     except requests.exceptions.RequestException as e:
         st.error(f"Error fetching data from URL: {e}")
+
