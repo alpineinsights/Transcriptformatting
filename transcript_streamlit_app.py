@@ -7,31 +7,13 @@ from fpdf import FPDF
 # Configure page
 st.set_page_config(page_title="PDF Transcript Reformatter", page_icon="📏", layout="wide")
 
-# Load watermark image
-watermark_image_path = '/mnt/data/Alpine-01.jpg'
-with open(watermark_image_path, "rb") as f:
-    watermark = Image.open(f)
-
-# Function to apply watermark
-def apply_watermark(base_image, watermark):
-    # Resize watermark to fit the image
-    base_width, base_height = base_image.size
-    watermark = watermark.resize((base_width // 3, base_height // 3), Image.ANTIALIAS)
-
-    # Apply watermark to bottom right corner
-    watermark_position = (base_width - watermark.width, base_height - watermark.height)
-    base_image.paste(watermark, watermark_position, mask=watermark)
-
-    return base_image
-
-# Function to create PDF from image
-def create_pdf_from_image(image):
+# Function to create PDF from text
+def create_pdf_from_text(text):
     pdf = FPDF()
     pdf.add_page()
-    with BytesIO() as img_buffer:
-        image.save(img_buffer, format="PNG")
-        img_buffer.seek(0)
-        pdf.image(img_buffer, x=10, y=10, w=190)
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_font("Arial", size=12)
+    pdf.multi_cell(0, 10, text)
     return pdf
 
 # User input for URL
@@ -48,34 +30,21 @@ if url:
         # Extract text from JSON
         transcript_text = data.get("transcript", {}).get("text", "")
         if transcript_text:
-            # Create an image from the text
-            img = Image.new('RGB', (800, 1000), color=(255, 255, 255))
-            d = ImageDraw.Draw(img)
-            font = ImageFont.load_default()
-            d.text((10, 10), transcript_text, fill=(0, 0, 0), font=font)
+            # Display original transcript text
+            st.subheader("Original Transcript Text")
+            st.text_area("Transcript Text", transcript_text, height=300)
 
-            # Show original transcript
-            st.subheader("Original Transcript Image")
-            st.image(img, caption="Original Transcript", use_column_width=True)
-
-            # Apply watermark
-            watermarked_img = apply_watermark(img, watermark)
-
-            # Display watermarked transcript
-            st.subheader("Watermarked Transcript Image")
-            st.image(watermarked_img, caption="Watermarked Transcript", use_column_width=True)
-
-            # Create PDF from watermarked image
-            pdf = create_pdf_from_image(watermarked_img)
-            output_path = "/mnt/data/watermarked_transcript.pdf"
+            # Create PDF from transcript text
+            pdf = create_pdf_from_text(transcript_text)
+            output_path = "/mnt/data/formatted_transcript.pdf"
             pdf.output(output_path)
 
-            # Allow users to download the modified transcript
+            # Allow users to download the formatted transcript
             with open(output_path, "rb") as file:
                 btn = st.download_button(
-                    label="Download Watermarked Transcript PDF",
+                    label="Download Formatted Transcript PDF",
                     data=file,
-                    file_name="watermarked_transcript.pdf",
+                    file_name="formatted_transcript.pdf",
                     mime="application/pdf"
                 )
         else:
