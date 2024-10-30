@@ -16,7 +16,8 @@ def create_pdf_from_text(text):
     lines = text.split('\n')
     for line in lines:
         if line.strip():
-            pdf.multi_cell(0, 10, line.strip())
+            # Encode line as UTF-8 to handle special characters properly
+            pdf.multi_cell(0, 10, line.strip().encode('latin-1', 'replace').decode('latin-1'))
             pdf.ln(2)
     return pdf
 
@@ -56,4 +57,5 @@ if url:
 
     except requests.exceptions.RequestException as e:
         st.error(f"Error fetching data from URL: {e}")
+
 
