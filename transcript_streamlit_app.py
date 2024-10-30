@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from fpdf import FPDF
+import tempfile
 
 # Configure page
 st.set_page_config(page_title="PDF Transcript Reformatter", page_icon="📏", layout="wide")
@@ -16,8 +17,7 @@ def create_pdf_from_text(text):
     lines = text.split('\n')
     for line in lines:
         if line.strip():
-            # Encode line as UTF-8 to handle special characters properly
-            pdf.multi_cell(0, 10, line.strip().encode('latin-1', 'replace').decode('latin-1'))
+            pdf.multi_cell(0, 10, line.strip())
             pdf.ln(2)
     return pdf
 
@@ -41,12 +41,15 @@ if url:
 
             # Create formatted PDF from transcript text
             pdf = create_pdf_from_text(transcript_text)
-            output_path = "/mnt/data/formatted_transcript.pdf"
-            pdf.output(output_path)
+
+            # Use a temporary file to store the PDF
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+                pdf.output(tmp_file.name)
+                tmp_file_path = tmp_file.name
 
             # Allow users to download the formatted transcript
-            with open(output_path, "rb") as file:
-                btn = st.download_button(
+            with open(tmp_file_path, "rb") as file:
+                st.download_button(
                     label="Download Formatted Transcript PDF",
                     data=file,
                     file_name="formatted_transcript.pdf",
